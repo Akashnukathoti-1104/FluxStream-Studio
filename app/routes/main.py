@@ -74,7 +74,7 @@ def dashboard():
     return render_template('dashboard.html', videos=videos, stats=stats, featured=featured, search=search, status=status)
 
 
-@main_bp.route('/upload', methods=['GET', 'POST'])
+@main_bp.route('/upload', methods=['GET', 'POST'], strict_slashes=False)
 def upload():
     if request.method == 'POST':
         upload_file = request.files.get('video')
