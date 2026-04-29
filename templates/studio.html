@@ -18,6 +18,8 @@
                     <td>{{ video.view_count }}</td>
                     <td>{{ video.like_count }}</td>
                 </tr>
+            {% else %}
+                <tr><td colspan="4">No videos yet. Upload one to populate the studio inventory.</td></tr>
             {% endfor %}
         </tbody>
     </table>

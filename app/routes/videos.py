@@ -64,7 +64,7 @@ def videos_page():
 
     query = Video.query
     if category:
-        query = query.filter(Video.category == category)
+        query = query.filter(Video.category.ilike(f'%{category}%'))
 
     if sort == 'newest':
         query = query.order_by(desc(Video.created_at))
@@ -73,7 +73,8 @@ def videos_page():
     else:
         query = query.order_by(desc(Video.like_count + Video.view_count))
 
-    return render_template('videos.html', videos=query.limit(30).all(), active_category=category, active_sort=sort)
+    categories = [row[0] for row in db.session.query(Video.category).distinct().order_by(Video.category.asc()).all() if row[0]]
+    return render_template('videos.html', videos=query.limit(30).all(), active_category=category, active_sort=sort, categories=categories)
 
 
 @videos_bp.get('/watch/<int:video_id>')
@@ -82,6 +83,10 @@ def watch_page(video_id: int):
     related = Video.query.filter(Video.id != video.id).order_by(desc(Video.view_count)).limit(8).all()
     history = WatchHistory.query.filter_by(video_id=video_id).first()
     resume_at = int((history.watch_percent or 0) * (video.duration_seconds or 0) / 100) if history else 0
+
+    video.view_count = (video.view_count or 0) + 1
+    db.session.commit()
+
     return render_template('watch.html', video=video, related=related, resume_at=resume_at)
 
 
@@ -147,6 +152,7 @@ def upload_video():
         status='processing',
         hls_playlist_url='',
         thumbnail_url='https://picsum.photos/seed/nexstream/1280/720',
+        embed_url='',
         duration_seconds=0,
         view_count=0,
         like_count=0,

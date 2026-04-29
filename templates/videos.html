@@ -12,6 +12,12 @@
         </select>
         <button type="submit">Apply</button>
     </form>
+    <div class="tag-row" style="margin-bottom:1rem">
+        <a class="tag {% if not active_category %}active{% endif %}" href="{{ url_for('videos.videos_page', sort=active_sort) }}">All</a>
+        {% for category in categories %}
+            <a class="tag {% if active_category|lower == category|lower %}active{% endif %}" href="{{ url_for('videos.videos_page', category=category, sort=active_sort) }}">{{ category }}</a>
+        {% endfor %}
+    </div>
     <div class="video-grid">
         {% for video in videos %}
             <a class="video-card" href="{{ url_for('videos.watch_page', video_id=video.id) }}">
@@ -21,6 +27,8 @@
                     <p>{{ video.category }} · {{ video.view_count }} views · {{ video.status }}</p>
                 </div>
             </a>
+        {% else %}
+            <div class="empty">No videos match the current filters.</div>
         {% endfor %}
     </div>
 </section>

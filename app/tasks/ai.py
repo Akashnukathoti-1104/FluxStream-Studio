@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
+
+import requests
+
 from . import create_celery_app
 from .. import create_app
 from ..extensions import db
 from ..models import Video
-from ..services.storage import get_s3_client, cloudfront_signed_url
-import requests
-import tempfile
-from pathlib import Path
+from ..services.storage import cloudfront_signed_url, get_s3_client
 
 flask_app = create_app()
 celery = create_celery_app(flask_app)
@@ -30,16 +32,17 @@ def generate_subtitles(video_id: int):
     if not video:
         return {'error': 'video not found'}
     # Try OpenAI Whisper API if key is configured, otherwise leave placeholder
-    api_key = create_app().config.get('OPENAI_API_KEY') or None
-    client = get_s3_client(create_app())
-    processed_prefix = create_app().config.get('S3_PROCESSED_PREFIX', 'nexstream/processed')
-    bucket = create_app().config.get('CDN_BUCKET') or create_app().config.get('RAW_BUCKET') or create_app().config.get('S3_BUCKET')
+    api_key = flask_app.config.get('OPENAI_API_KEY') or None
+    client = get_s3_client(flask_app)
+    processed_prefix = flask_app.config.get('S3_PROCESSED_PREFIX', 'nexstream/processed')
+    raw_bucket = flask_app.config.get('RAW_BUCKET') or flask_app.config.get('S3_BUCKET')
+    destination_bucket = flask_app.config.get('CDN_BUCKET') or raw_bucket
 
     try:
         local = Path(tempfile.mktemp(suffix='.mp4'))
-        if client and video.s3_key_raw and bucket:
+        if client and video.s3_key_raw and raw_bucket:
             # download raw source
-            client.download_file(bucket, video.s3_key_raw, str(local))
+            client.download_file(raw_bucket, video.s3_key_raw, str(local))
         else:
             # fall back to local path
             local = Path(video.s3_key_raw)
@@ -65,12 +68,12 @@ def generate_subtitles(video_id: int):
 
         # upload to processed bucket
         s3_key = f"{processed_prefix}/{video.id}/subtitles.vtt"
-        if client and bucket:
-            client.upload_file(str(tmp_vtt), bucket, s3_key)
-            video.subtitle_url = cloudfront_signed_url(create_app(), s3_key)
+        if client and destination_bucket:
+            client.upload_file(str(tmp_vtt), destination_bucket, s3_key)
+            video.subtitle_url = cloudfront_signed_url(flask_app, s3_key)
         else:
             # link to local instance file
-            inst_sub = Path(create_app().config['SUBTITLE_FOLDER']) / f"{video.id}.vtt"
+            inst_sub = Path(flask_app.config['SUBTITLE_FOLDER']) / f"{video.id}.vtt"
             inst_sub.parent.mkdir(parents=True, exist_ok=True)
             tmp_vtt.replace(inst_sub)
             video.subtitle_url = f"/subtitles/{video.id}.vtt"

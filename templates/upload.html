@@ -8,6 +8,8 @@
         <label>Description<textarea name="description" rows="3"></textarea></label>
         <label>Category<input name="category" value="Tech"></label>
         <label>Tags (comma separated)<input name="tags" placeholder="ai,streaming,hls"></label>
+        <label>Video file<input id="videoFile" name="video" type="file" accept="video/*" required></label>
+        <div id="uploadPreview" class="preview-shell">Choose a file to see a preview.</div>
         <button type="submit">Start Processing</button>
     </form>
     <div id="uploadProgress" class="progress-box">No active jobs.</div>

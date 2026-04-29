@@ -1,13 +1,34 @@
 (function () {
   const form = document.getElementById('uploadForm');
   const output = document.getElementById('uploadProgress');
+  const videoInput = document.getElementById('videoFile');
+  const preview = document.getElementById('uploadPreview');
   const startLive = document.getElementById('startLive');
   const endLive = document.getElementById('endLive');
   const liveOutput = document.getElementById('liveOutput');
 
+  if (videoInput && preview) {
+    videoInput.addEventListener('change', () => {
+      const file = videoInput.files && videoInput.files[0];
+      if (!file) {
+        preview.textContent = 'Choose a file to see a preview.';
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = '<video controls src="' + url + '"></video>';
+    });
+  }
+
   if (form && output) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const file = form.video && form.video.files && form.video.files[0];
+      if (!file) {
+        output.textContent = 'Please choose a video file.';
+        return;
+      }
+
       const payload = {
         title: form.title.value,
         description: form.description.value,
@@ -16,7 +37,7 @@
       };
 
       // request server for presigned POST fields
-      payload.original_filename = (form.video && form.video.files && form.video.files[0]) ? form.video.files[0].name : undefined;
+      payload.original_filename = file.name;
       const response = await fetch('/api/videos/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,12 +46,6 @@
       const data = await response.json();
       if (!data.job_id || !data.presigned_url) {
         output.textContent = 'Upload request failed.';
-        return;
-      }
-
-      const file = form.video.files[0];
-      if (!file) {
-        output.textContent = 'No file selected.';
         return;
       }
 
