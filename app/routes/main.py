@@ -5,8 +5,8 @@ import shutil
 import uuid
 from pathlib import Path
 
-from flask import (Blueprint, abort, current_app, flash, redirect, render_template,
-                   request, send_file, url_for)
+from flask import (Blueprint, abort, current_app, flash, jsonify, redirect,
+                   render_template, request, send_file, url_for)
 from sqlalchemy import func, or_
 from werkzeug.utils import secure_filename
 
@@ -72,6 +72,11 @@ def dashboard():
     stats = _video_status_counts()
     featured = videos[0] if videos else None
     return render_template('dashboard.html', videos=videos, stats=stats, featured=featured, search=search, status=status)
+
+
+@main_bp.route('/healthz')
+def healthz():
+    return jsonify({'status': 'ok'}), 200
 
 
 @main_bp.route('/upload', methods=['GET', 'POST'], strict_slashes=False)
