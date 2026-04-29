@@ -55,39 +55,19 @@ Windows or macOS development:
 python run.py
 ```
 
-Production-style local run:
-
-```bash
-waitress-serve --listen=0.0.0.0:8000 wsgi:app
-```
-
 If you prefer Flask's CLI for quick development, use:
 
 ```bash
 flask --app run.py --debug run
 ```
 
-## Free Deployment
+## Runtime Notes
 
-The repo includes deployment files for a free host like Render.
+The app runs locally with Flask during development. For quick startup, use:
 
-1. Push this project to GitHub.
-2. Create a new Render Web Service from the repository.
-3. Use the default build command: `pip install -r requirements.txt`
-4. Use the start command: `waitress-serve --listen=0.0.0.0:$PORT wsgi:app`
-5. Keep the service on the free plan.
-
-If your host reads `Procfile`, it will use the same command automatically.
-
-## Deploy
-
-The project is already WSGI-ready through [wsgi.py](wsgi.py). Use `wsgi:app` as the entrypoint on your host.
-
-Recommended deploy options:
-
-1. Render or Railway: build with `pip install -r requirements.txt`, then start with `waitress-serve --listen=0.0.0.0:$PORT wsgi:app`.
-2. A Linux VM or container: install Python and FFmpeg, set environment variables if you want S3, then run the same `waitress-serve` command.
-3. If your host exposes a different WSGI start command, point it at `wsgi:app`.
+```bash
+flask --app run.py --debug run
+```
 
 ## AWS S3 Optional Configuration
 
