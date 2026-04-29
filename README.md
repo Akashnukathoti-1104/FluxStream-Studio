@@ -71,11 +71,13 @@ flask --app run.py --debug run
 
 ## Deploy On Render
 
-This project is set up as a Docker-based Render web service so it can install FFmpeg and keep the app's runtime data in `instance/`.
+This project is set up for Render's native Python runtime. Render already provides `ffmpeg` in the native runtime tools, so you can deploy without Docker.
 
 1. Create a new Render Web Service from this repository.
-2. Let Render use the provided `render.yaml` and `Dockerfile`.
-3. Keep the attached disk mounted at `/app/instance`.
+2. Use the provided `render.yaml`, or enter these values manually:
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `gunicorn wsgi:app --bind 0.0.0.0:$PORT`
+3. Keep the attached disk mounted at `/opt/render/project/src/instance`.
 4. Set `SECRET_KEY` in the Render environment if you want a fixed app secret.
 
 ## AWS S3 Optional Configuration
