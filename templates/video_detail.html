@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}{{ video.title }} | FluxStream Studio{% endblock %}
+{% block content %}
+<section class="detail-hero">
+    <div class="detail-copy">
+        <p class="eyebrow">Video detail</p>
+        <h1>{{ video.title }}</h1>
+        <p>{{ video.description or 'No description provided.' }}</p>
+        <div class="detail-pills">
+            <span class="status-pill status-{{ video.status }}">{{ video.status }}</span>
+            <span>{{ video.duration_label() }}</span>
+            <span>{{ video.resolution() }}</span>
+            <span>{{ video.size_label() }}</span>
+        </div>
+        <div class="detail-actions">
+            <a class="button button-primary" href="{{ download_url }}">Download source</a>
+            <a class="button button-secondary" href="{{ url_for('main.dashboard') }}">Back to library</a>
+        </div>
+    </div>
+    <div class="detail-art">
+        {% if video.thumbnail_path %}
+            <div class="detail-thumbnail" style="background-image:url('{{ url_for('main.thumbnail_video', video_id=video.id) }}')"></div>
+        {% else %}
+            <div class="detail-thumbnail placeholder">
+                <span>{{ video.title[:2] | upper }}</span>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="player-grid">
+    <article class="panel player-panel">
+        {% if video.status == 'ready' %}
+            <video id="hls-player" class="hls-player" controls playsinline data-hls-url="{{ stream_manifest_url }}"></video>
+            <p class="muted">Streaming manifest is served by the Flask app and played with HLS.js when needed.</p>
+        {% elif video.status == 'processing' %}
+            <div class="state-card">
+                <h3>Processing in progress</h3>
+                <p>The platform is generating thumbnails and HLS segments right now. Refresh later to start playback.</p>
+            </div>
+        {% else %}
+            <div class="state-card failed">
+                <h3>Processing failed</h3>
+                <p>{{ video.error_message or 'The transcoder reported an unknown failure.' }}</p>
+            </div>
+        {% endif %}
+    </article>
+
+    <article class="panel info-panel">
+        <h3>Asset details</h3>
+        <dl class="info-list">
+            <div><dt>Filename</dt><dd>{{ video.original_filename }}</dd></div>
+            <div><dt>Storage</dt><dd>{{ video.storage_backend }}</dd></div>
+            <div><dt>Uploaded</dt><dd>{{ video.created_at.strftime('%b %d, %Y %H:%M') }}</dd></div>
+            <div><dt>Status</dt><dd>{{ video.status }}</dd></div>
+        </dl>
+        <div class="card-actions vertical">
+            <form action="{{ url_for('main.delete_video', video_id=video.id) }}" method="post" onsubmit="return confirm('Delete this video permanently?');">
+                <button type="submit" class="button button-danger">Delete video</button>
+            </form>
+        </div>
+    </article>
+</section>
+{% endblock %}

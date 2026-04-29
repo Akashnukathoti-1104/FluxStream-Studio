@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Upload | FluxStream Studio{% endblock %}
+{% block content %}
+<section class="split-layout">
+    <div class="panel panel-lux">
+        <p class="eyebrow">Create a new stream asset</p>
+        <h1>Drop in your file and let the pipeline convert it into a browsable, streamable asset.</h1>
+        <p class="lead">Accepted formats: MP4, MOV, MKV, WEBM, M4V, AVI, and FLV. The backend generates thumbnails, duration metadata, and HLS segments automatically.</p>
+        <div class="feature-list">
+            <div>
+                <strong>1.</strong>
+                <span>Upload a large source file</span>
+            </div>
+            <div>
+                <strong>2.</strong>
+                <span>FFmpeg builds the streaming package</span>
+            </div>
+            <div>
+                <strong>3.</strong>
+                <span>Publish to your dashboard instantly</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel upload-panel">
+        <form class="upload-form" method="post" enctype="multipart/form-data">
+            <label>
+                <span>Title</span>
+                <input type="text" name="title" placeholder="Project demo, launch reel, teaser, tutorial">
+            </label>
+            <label>
+                <span>Description</span>
+                <textarea name="description" rows="4" placeholder="Context, audience, tags, notes"></textarea>
+            </label>
+            <label class="dropzone" for="video-input">
+                <input id="video-input" type="file" name="video" accept="video/*" data-upload-input>
+                <div>
+                    <strong>Choose or drop a video</strong>
+                    <p>Maximum size follows your server limit. The file is processed into HLS after upload.</p>
+                </div>
+            </label>
+            <div class="upload-actions">
+                <a class="button button-secondary" href="{{ url_for('main.dashboard') }}">Cancel</a>
+                <button type="submit" class="button button-primary">Process upload</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
