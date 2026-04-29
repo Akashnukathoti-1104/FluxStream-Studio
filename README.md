@@ -69,6 +69,15 @@ The app runs locally with Flask during development. For quick startup, use:
 flask --app run.py --debug run
 ```
 
+## Deploy On Render
+
+This project is set up as a Docker-based Render web service so it can install FFmpeg and keep the app's runtime data in `instance/`.
+
+1. Create a new Render Web Service from this repository.
+2. Let Render use the provided `render.yaml` and `Dockerfile`.
+3. Keep the attached disk mounted at `/app/instance`.
+4. Set `SECRET_KEY` in the Render environment if you want a fixed app secret.
+
 ## AWS S3 Optional Configuration
 
 If you want mirrored source uploads in S3, set these environment variables:

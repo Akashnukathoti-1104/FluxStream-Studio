@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: fluxstream-studio
+    env: docker
+    plan: starter
+    autoDeploy: true
+    disk:
+      name: fluxstream-data
+      mountPath: /app/instance
+      sizeGB: 1
