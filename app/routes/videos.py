@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from flask import Blueprint, Response, jsonify, render_template, request
+from flask import Blueprint, Response, jsonify, render_template, request, current_app
 from sqlalchemy import desc, or_
 
 from ..extensions import db
@@ -160,8 +160,68 @@ def upload_video():
         'started_at': datetime.now(timezone.utc).isoformat(),
     }
 
-    # Placeholder flow: production implementation should return a real S3 presigned URL.
-    return jsonify({'job_id': job_id, 'video_id': video.id, 'presigned_url': 'https://example-presigned-url'}), 202
+    # Prepare a presigned POST for the client to upload directly to S3.
+    from ..services.storage import generate_presigned_post
+
+    # object key: <prefix>/<video_id>/<original_filename>
+    filename = (data.get('original_filename') or f'{uuid.uuid4().hex}.mp4').strip()
+    object_key = f"{current_app.config.get('S3_SOURCE_PREFIX','nexstream/raw')}/{video.id}/{filename}"
+
+    try:
+        presigned = generate_presigned_post(current_app, object_key, content_type='video/mp4')
+    except Exception as exc:
+        _UPLOAD_JOBS[job_id]['status'] = 'error'
+        return jsonify({'error': f'presign failed: {exc}'}), 500
+
+    # return the presign info and job id; client should POST file to presigned['url'] with presigned['fields']
+    return jsonify({
+        'job_id': job_id,
+        'video_id': video.id,
+        'presigned_url': presigned['url'],
+        'presigned_fields': presigned['fields'],
+        'object_key': object_key,
+    }), 202
+
+
+
+@videos_bp.post('/api/videos/upload/complete')
+def upload_complete():
+    """Called by the client after successfully uploading to S3. Triggers processing.
+
+    Expects JSON: { job_id, object_key, file_size }
+    """
+    data = request.get_json(silent=True) or {}
+    job_id = data.get('job_id')
+    object_key = data.get('object_key')
+    file_size = data.get('file_size')
+
+    job = _UPLOAD_JOBS.get(job_id)
+    if not job:
+        return jsonify({'error': 'job not found'}), 404
+
+    video = Video.query.get(job['video_id'])
+    if not video:
+        return jsonify({'error': 'video not found'}), 404
+
+    # mark source and enqueue transcode
+    from ..services.storage import get_s3_client
+    from ..tasks.transcode import transcode_video
+
+    video.s3_key_raw = object_key
+    video.file_size_bytes = int(file_size or 0)
+    video.status = 'processing'
+    db.session.commit()
+
+    # enqueue Celery job
+    try:
+        transcode_video.delay(video.id, object_key)
+    except Exception:
+        # fallback: try apply_async
+        transcode_video.apply_async(args=(video.id, object_key))
+
+    job['status'] = 'processing'
+    job['progress'] = 20
+    return jsonify({'message': 'processing started', 'job_id': job_id, 'video_id': video.id}), 202
 
 
 @videos_bp.get('/api/videos/upload/<job_id>/status')

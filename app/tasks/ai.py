@@ -4,6 +4,10 @@ from . import create_celery_app
 from .. import create_app
 from ..extensions import db
 from ..models import Video
+from ..services.storage import get_s3_client, cloudfront_signed_url
+import requests
+import tempfile
+from pathlib import Path
 
 flask_app = create_app()
 celery = create_celery_app(flask_app)
@@ -25,7 +29,57 @@ def generate_subtitles(video_id: int):
     video = Video.query.get(video_id)
     if not video:
         return {'error': 'video not found'}
+    # Try OpenAI Whisper API if key is configured, otherwise leave placeholder
+    api_key = create_app().config.get('OPENAI_API_KEY') or None
+    client = get_s3_client(create_app())
+    processed_prefix = create_app().config.get('S3_PROCESSED_PREFIX', 'nexstream/processed')
+    bucket = create_app().config.get('CDN_BUCKET') or create_app().config.get('RAW_BUCKET') or create_app().config.get('S3_BUCKET')
 
-    video.subtitle_url = f'/static/subtitles/{video_id}.vtt'
-    db.session.commit()
-    return {'video_id': video.id, 'subtitle_url': video.subtitle_url}
+    try:
+        local = Path(tempfile.mktemp(suffix='.mp4'))
+        if client and video.s3_key_raw and bucket:
+            # download raw source
+            client.download_file(bucket, video.s3_key_raw, str(local))
+        else:
+            # fall back to local path
+            local = Path(video.s3_key_raw)
+
+        transcript = ''
+        if api_key and local.exists():
+            url = 'https://api.openai.com/v1/audio/transcriptions'
+            with open(local, 'rb') as fh:
+                files = {'file': fh}
+                data = {'model': 'whisper-1'}
+                r = requests.post(url, headers={'Authorization': f'Bearer {api_key}'}, files=files, data=data, timeout=120)
+                if r.status_code == 200:
+                    j = r.json()
+                    transcript = j.get('text', '')
+
+        if not transcript:
+            transcript = 'Transcription not available.'
+
+        # write simple VTT (single cue)
+        vtt = f"WEBVTT\n\n00:00:00.000 --> 00:10:00.000\n{transcript}\n"
+        tmp_vtt = Path(tempfile.mktemp(suffix='.vtt'))
+        tmp_vtt.write_text(vtt, encoding='utf-8')
+
+        # upload to processed bucket
+        s3_key = f"{processed_prefix}/{video.id}/subtitles.vtt"
+        if client and bucket:
+            client.upload_file(str(tmp_vtt), bucket, s3_key)
+            video.subtitle_url = cloudfront_signed_url(create_app(), s3_key)
+        else:
+            # link to local instance file
+            inst_sub = Path(create_app().config['SUBTITLE_FOLDER']) / f"{video.id}.vtt"
+            inst_sub.parent.mkdir(parents=True, exist_ok=True)
+            tmp_vtt.replace(inst_sub)
+            video.subtitle_url = f"/subtitles/{video.id}.vtt"
+
+        db.session.commit()
+        return {'video_id': video.id, 'subtitle_url': video.subtitle_url}
+    finally:
+        try:
+            if 'local' in locals() and isinstance(local, Path) and local.exists():
+                local.unlink()
+        except Exception:
+            pass

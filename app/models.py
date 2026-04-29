@@ -42,6 +42,7 @@ class Video(TimestampMixin, db.Model):
     duration_seconds = db.Column(db.Integer, nullable=True)
     resolution = db.Column(db.String(40), nullable=True)
     file_size_bytes = db.Column(db.BigInteger, nullable=True)
+    error_message = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='uploading')
     view_count = db.Column(db.BigInteger, nullable=False, default=0)
     like_count = db.Column(db.BigInteger, nullable=False, default=0)

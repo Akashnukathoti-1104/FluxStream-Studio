@@ -43,6 +43,7 @@ class Config:
     S3_ACCESS_KEY_ID = os.getenv('S3_ACCESS_KEY_ID', '').strip()
     S3_SECRET_ACCESS_KEY = os.getenv('S3_SECRET_ACCESS_KEY', '').strip()
     S3_SOURCE_PREFIX = os.getenv('S3_SOURCE_PREFIX', 'nexstream/raw').strip('/')
+    S3_PROCESSED_PREFIX = os.getenv('S3_PROCESSED_PREFIX', 'nexstream/processed').strip('/')
     CLOUDFRONT_DOMAIN = os.getenv('CLOUDFRONT_DOMAIN', '').strip()
 
 
