@@ -1,39 +1,102 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard | NexStream{% endblock %}
-{% block content %}
-<section class="panel hero">
-    <h2>NexStream Dashboard</h2>
-    <p>Upload, transcode, caption, and publish with one cinematic workflow.</p>
-    <div class="stat-grid">
-        <article><small>Views</small><strong>{{ stats.views }}</strong></article>
-        <article><small>Watch Time</small><strong>{{ stats.watch_time }}</strong></article>
-        <article><small>Subscribers</small><strong>{{ stats.subscribers }}</strong></article>
-        <article><small>Uploads</small><strong>{{ stats.uploads }}</strong></article>
-    </div>
-</section>
-
-<section class="panel">
-    <div class="panel-head">
-        <h3>Trending Uploads</h3>
-        <a href="{{ url_for('videos.upload_page') }}">Add video</a>
-    </div>
-    <div class="video-grid">
-        {% for video in videos %}
-            <a class="video-card" href="{{ url_for('videos.watch_page', video_id=video.id) }}">
-                <img src="{{ video.ai_thumbnail_url or video.thumbnail_url or 'https://picsum.photos/seed/fallback/640/360' }}" alt="{{ video.title }}">
-                <div>
-                    <h4>{{ video.title }}</h4>
-                    <p>{{ video.category }} · {{ video.view_count }} views</p>
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Dashboard | NexStream</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-pro.css') }}">
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">▶</div>
+            <span class="logo-text">Nex<span>Stream</span></span>
+        </div>
+        <nav class="nav">
+            <div class="nav-section">Discover</div>
+            <a class="nav-item active" href="{{ url_for('videos.root_dashboard') }}">Dashboard</a>
+            <a class="nav-item" href="{{ url_for('videos.videos_page') }}">My Videos <span class="nav-badge">{{ stats.uploads }}</span></a>
+            <a class="nav-item" href="{{ url_for('videos.upload_page') }}">Upload</a>
+            <a class="nav-item" href="{{ url_for('studio.studio_page') }}">Analytics</a>
+            <a class="nav-item" href="{{ url_for('videos.live_page') }}">Live</a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="user-pill">
+                <div class="avatar">AK</div>
+                <div class="user-info">
+                    <div class="name">Arjun Kumar</div>
+                    <div class="role">Creator</div>
                 </div>
-            </a>
-        {% else %}
-            <p>No videos yet. Use Upload to start the pipeline.</p>
-        {% endfor %}
-    </div>
-</section>
+                <div class="pro-badge">PRO</div>
+            </div>
+        </div>
+    </aside>
 
-<section class="panel">
-    <h3>Analytics Pulse</h3>
-    <canvas id="analyticsChart" data-endpoint="/api/studio/analytics?range=7d"></canvas>
-</section>
-{% endblock %}
+    <main class="main">
+        <header class="topbar">
+            <div class="search-box"><input type="text" placeholder="Search videos, playlists, channels..."></div>
+            <div class="topbar-right">
+                <a class="upload-btn" href="{{ url_for('videos.upload_page') }}">Upload</a>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="hero-player">
+                <div class="player-screen">
+                    <div class="video-label">LIVE</div>
+                    <div class="play-ring">▶</div>
+                    <div class="video-title-overlay">
+                        <h3>Deep Space: Journey Beyond Our Galaxy</h3>
+                        <p>NexStream Originals · Trending now</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-label">Total views</div><div class="stat-val">{{ stats.views }}</div></div>
+                <div class="stat-card"><div class="stat-label">Watch time</div><div class="stat-val">{{ stats.watch_time }}</div></div>
+                <div class="stat-card"><div class="stat-label">Subscribers</div><div class="stat-val">{{ stats.subscribers }}</div></div>
+                <div class="stat-card"><div class="stat-label">Videos live</div><div class="stat-val">{{ stats.uploads }}</div></div>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">Trending now</div>
+            </div>
+
+            <div class="video-grid">
+                {% for video in videos %}
+                <a class="vid-card" href="{{ url_for('videos.watch_page', video_id=video.id) }}">
+                    <div class="vid-thumb" style="background-image:url('{{ video.ai_thumbnail_url or video.thumbnail_url or 'https://picsum.photos/seed/fallback/640/360' }}');background-size:cover;background-position:center;">
+                        <div class="vid-duration">{{ video.duration_seconds or 0 }}s</div>
+                    </div>
+                    <div class="vid-info">
+                        <div class="vid-title">{{ video.title }}</div>
+                        <div class="vid-meta"><span>{{ video.view_count }} views</span><span class="vid-badge">{{ video.category }}</span></div>
+                    </div>
+                </a>
+                {% else %}
+                <div class="empty">No videos yet. Upload one to start.</div>
+                {% endfor %}
+            </div>
+
+            <div class="bottom-row">
+                <div class="analytics-card">
+                    <div class="section-title">Views - last 14 days</div>
+                    <div class="mini-chart" id="chartBars"></div>
+                </div>
+                <div class="analytics-card">
+                    <div class="section-title">Upload queue</div>
+                    <div class="uploads-list">
+                        <div class="upload-item"><span>deep-space-ep5-raw.mp4</span><span>78%</span></div>
+                        <div class="upload-item"><span>quantum-computing-tutorial.mkv</span><span>45%</span></div>
+                        <div class="upload-item"><span>ocean-abyss-short-clip.mp4</span><span>12%</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/dashboard-pro.js') }}"></script>
+</body>
+</html>
