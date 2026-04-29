@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
 from .extensions import db
 
 
@@ -21,6 +22,12 @@ class User(UserMixin, TimestampMixin, db.Model):
     subscriber_count = db.Column(db.Integer, nullable=False, default=0)
     plan = db.Column(db.String(20), nullable=False, default='free')
 
+    def set_password(self, password: str) -> None:
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        return check_password_hash(self.password_hash or '', password)
+
 
 class Video(TimestampMixin, db.Model):
     __tablename__ = 'videos'
@@ -29,6 +36,7 @@ class Video(TimestampMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     title = db.Column(db.String(180), nullable=False)
     description = db.Column(db.Text, nullable=False, default='')
+    embed_url = db.Column(db.String(500), nullable=False, default='')
     tags = db.Column(db.String(300), nullable=False, default='')
     category = db.Column(db.String(80), nullable=False, default='General')
     s3_key_raw = db.Column(db.String(600), nullable=True)

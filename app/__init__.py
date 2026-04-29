@@ -1,6 +1,7 @@
 from flask import Flask
 from dotenv import load_dotenv
 from pathlib import Path
+from sqlalchemy import inspect, text
 
 from .config import Config
 from .extensions import db, login_manager, socketio
@@ -50,5 +51,22 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     with app.app_context():
         from . import models
         db.create_all()
+
+        inspector = inspect(db.engine)
+        video_columns = {column['name'] for column in inspector.get_columns('videos')}
+        if 'embed_url' not in video_columns:
+            db.session.execute(text("ALTER TABLE videos ADD COLUMN embed_url VARCHAR(500) DEFAULT ''"))
+        if 'error_message' not in video_columns:
+            db.session.execute(text('ALTER TABLE videos ADD COLUMN error_message TEXT'))
+        db.session.commit()
+
+        try:
+            from seed import seed
+
+            if models.Video.query.count() == 0:
+                seed(app)
+        except Exception:
+            # startup seeding should never prevent the app from booting
+            pass
 
     return app

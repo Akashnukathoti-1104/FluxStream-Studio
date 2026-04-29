@@ -4,7 +4,18 @@
 <section class="panel watch-layout">
     <article>
         <h2>{{ video.title }}</h2>
-        <video id="player" controls data-playlist="{{ video.hls_playlist_url or '/stream/' ~ video.id ~ '/playlist.m3u8' }}" data-resume="{{ resume_at }}"></video>
+        {% if video.embed_url %}
+            <div class="embed-shell">
+                <iframe
+                    src="{{ video.embed_url }}?autoplay=1&rel=0&modestbranding=1"
+                    title="{{ video.title }}"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        {% else %}
+            <video id="player" controls data-playlist="{{ video.hls_playlist_url or '/stream/' ~ video.id ~ '/playlist.m3u8' }}" data-resume="{{ resume_at }}"></video>
+        {% endif %}
         <p>{{ video.description }}</p>
         <div class="button-row">
             <button data-quality="360p">360p</button>

@@ -19,6 +19,7 @@ def _serialize_video(video: Video) -> dict:
         'id': video.id,
         'title': video.title,
         'description': video.description,
+        'embed_url': video.embed_url,
         'tags': video.tags.split(',') if video.tags else [],
         'category': video.category,
         'status': video.status,
@@ -34,12 +35,14 @@ def _serialize_video(video: Video) -> dict:
 
 @videos_bp.get('/')
 def root_dashboard():
-    videos = Video.query.order_by(desc(Video.view_count)).limit(12).all()
+    live_videos = Video.query.filter(Video.status == 'live').all()
+    videos = sorted(live_videos, key=lambda video: video.view_count or 0, reverse=True)[:12]
     stats = {
-        'views': sum(v.view_count for v in videos),
-        'watch_time': sum((v.duration_seconds or 0) for v in videos),
+        'views': sum(video.view_count or 0 for video in live_videos),
+        'watch_time': round(sum((video.view_count or 0) * (video.duration_seconds or 0) for video in live_videos) / 3600, 1),
         'subscribers': User.query.filter_by(role='creator').with_entities(db.func.sum(User.subscriber_count)).scalar() or 0,
         'uploads': Video.query.count(),
+        'live': Video.query.filter_by(status='live').count(),
     }
     return render_template('dashboard.html', videos=videos, stats=stats)
 
