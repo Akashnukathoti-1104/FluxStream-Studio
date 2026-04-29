@@ -9,7 +9,13 @@ from .routes.main import main_bp
 
 def create_app(config_object: type[Config] | None = None) -> Flask:
     load_dotenv()
-    app = Flask(__name__, instance_relative_config=True)
+    base_dir = Path(__file__).resolve().parent.parent
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        template_folder=str(base_dir / 'templates'),
+        static_folder=str(base_dir / 'static'),
+    )
     app.config.from_object(config_object or Config)
 
     base_instance = Path(app.instance_path)
