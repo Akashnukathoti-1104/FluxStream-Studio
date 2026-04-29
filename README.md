@@ -93,8 +93,3 @@ When S3 is not configured, the platform uses local disk storage and still works 
 - The browser player uses HLS.js for wide compatibility.
 - The SQLite database is created automatically on startup.
 
-## GitHub Upload Checklist
-
-- Commit the source files in this repository.
-- Keep `instance/` out of Git because it contains runtime data and generated media.
-- Add your own screenshots or demo notes if your submission requires them.
