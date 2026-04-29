@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Videos | NexStream{% endblock %}
+{% block content %}
+<section class="panel">
+    <h2>Explore Videos</h2>
+    <form class="filter-row" method="get">
+        <input name="category" placeholder="Category" value="{{ active_category }}">
+        <select name="sort">
+            <option value="trending" {% if active_sort == 'trending' %}selected{% endif %}>Trending</option>
+            <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="most_watched" {% if active_sort == 'most_watched' %}selected{% endif %}>Most Watched</option>
+        </select>
+        <button type="submit">Apply</button>
+    </form>
+    <div class="video-grid">
+        {% for video in videos %}
+            <a class="video-card" href="{{ url_for('videos.watch_page', video_id=video.id) }}">
+                <img src="{{ video.ai_thumbnail_url or video.thumbnail_url or 'https://picsum.photos/seed/fallback/640/360' }}" alt="{{ video.title }}">
+                <div>
+                    <h4>{{ video.title }}</h4>
+                    <p>{{ video.category }} · {{ video.view_count }} views · {{ video.status }}</p>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

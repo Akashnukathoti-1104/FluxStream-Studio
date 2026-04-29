@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Studio | NexStream{% endblock %}
+{% block content %}
+<section class="panel">
+    <h2>Creator Studio</h2>
+    <p>Plan: {{ user.plan if user else 'free' }} · Earnings: ${{ '%.2f'|format(earnings) }}</p>
+    <canvas id="studioChart" data-endpoint="/api/studio/analytics?range=30d"></canvas>
+</section>
+<section class="panel">
+    <h3>Video Inventory</h3>
+    <table>
+        <thead><tr><th>Title</th><th>Status</th><th>Views</th><th>Likes</th></tr></thead>
+        <tbody>
+            {% for video in videos %}
+                <tr>
+                    <td>{{ video.title }}</td>
+                    <td>{{ video.status }}</td>
+                    <td>{{ video.view_count }}</td>
+                    <td>{{ video.like_count }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

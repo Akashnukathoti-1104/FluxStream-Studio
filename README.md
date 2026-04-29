@@ -1,106 +1,73 @@
-# FluxStream Studio
+# NexStream 2.0
 
-FluxStream Studio is an advanced Flask-based video platform for uploading, transcoding, streaming, and managing media libraries. It uses SQLite for metadata, FFmpeg for thumbnail generation and HLS packaging, and optional AWS S3 mirroring for source uploads.
+NexStream 2.0 is an AI-powered video streaming platform scaffold built with Flask, SQLAlchemy, Celery, Redis, FFmpeg-oriented task flows, and modular API blueprints.
 
-## Features
+## Stack
 
-- Upload single video files through a polished dashboard
-- Automatically generate HLS segments for browser playback
-- Create thumbnails and media metadata with FFmpeg and ffprobe
-- Search, filter, inspect, and delete uploaded videos
-- Optional AWS S3 storage for mirrored source assets
-- Responsive interface with a premium dark visual design
+- Backend: Flask, Flask-Login, Flask-SocketIO, SQLAlchemy
+- Jobs: Celery + Redis
+- Video pipeline: FFmpeg task stubs for multi-quality/HLS workflow
+- Storage: AWS S3/CloudFront ready configuration
+- AI hooks: Whisper and AI thumbnail task stubs
+- DB: SQLite (default) and PostgreSQL-ready via `DATABASE_URL`
+- Frontend: Vanilla JS, Chart.js, HLS.js, cinematic dark UI
 
-## Tech Stack
+## Project Layout
 
-- Python
-- Flask
-- Flask-SQLAlchemy
-- SQLite
-- FFmpeg / ffprobe
-- AWS S3 via boto3
-- HTML, CSS, JavaScript
+- `app/__init__.py`: Flask factory and blueprint registration
+- `app/models.py`: User/Video/Playlist/Comment/Like/Subscription/WatchHistory/Analytics
+- `app/routes/auth.py`: register/login/google callback placeholders
+- `app/routes/videos.py`: dashboard, watch/upload pages, video APIs, comments, likes, subscribe
+- `app/routes/studio.py`: studio page and analytics APIs
+- `app/routes/stream.py`: HLS stream endpoints (placeholder routing)
+- `app/routes/live.py`: live stream API start/end/active
+- `app/tasks/`: Celery task stubs for transcode, AI, and analytics
+- `seed.py`: seeds creator + 6 sample videos + analytics rows
+- `docker-compose.yml`: web + worker + redis + nginx-rtmp
 
-## Project Structure
+## Key Endpoints
 
-- `app/` Flask application package
-- `templates/` Jinja templates
-- `static/` UI assets
-- `instance/` runtime uploads, HLS output, thumbnails, and SQLite database
-- `run.py` development entry point
+- Auth: `/api/auth/register`, `/api/auth/login`, `/api/auth/google/callback`
+- Videos: `/api/videos`, `/api/videos/<id>`, `/api/videos/upload`, `/api/videos/upload/<job_id>/status`
+- Studio: `/api/studio/dashboard`, `/api/studio/analytics`, `/api/studio/videos`
+- Social: `/api/videos/<id>/like`, `/api/videos/<id>/comments`, `/api/subscribe/<channel_id>`
+- Live: `/api/live/start`, `/api/live/end`, `/api/live/active`
+- Health: `/healthz`
 
-## Setup
+## Local Run
 
-1. Create and activate a virtual environment.
+1. Create/activate virtualenv.
 2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Copy the example environment file and customize it if needed:
+3. Seed sample data:
 
 ```bash
-copy .env.example .env
+python seed.py
 ```
 
-4. Install FFmpeg so `ffmpeg` and `ffprobe` are available on your PATH.
-5. Start the app. The secret key is created automatically in `instance/secret_key.txt` the first time you run it if `SECRET_KEY` is not set.
-
-## Run Locally
-
-Windows or macOS development:
+4. Run Flask app:
 
 ```bash
 python run.py
 ```
 
-If you prefer Flask's CLI for quick development, use:
+5. Open:
 
-```bash
-flask --app run.py --debug run
-```
+- Dashboard: `http://127.0.0.1:5000/`
+- Studio: `http://127.0.0.1:5000/studio`
+- Upload: `http://127.0.0.1:5000/upload`
 
-## Runtime Notes
+## Render
 
-The app runs locally with Flask during development. For quick startup, use:
-
-```bash
-flask --app run.py --debug run
-```
-
-## Deploy On Render
-
-This project is set up for Render's native Python runtime. Render already provides `ffmpeg` in the native runtime tools, so you can deploy without Docker.
-
-1. Create a new Render Web Service from this repository.
-2. Use the provided `render.yaml`, or enter these values manually:
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `gunicorn wsgi:app --bind 0.0.0.0:$PORT`
-3. Keep the attached disk mounted at `/opt/render/project/src/instance`.
-4. Set `SECRET_KEY` in the Render environment if you want a fixed app secret.
-
-## AWS S3 Optional Configuration
-
-If you want mirrored source uploads in S3, set these environment variables:
-
-- `S3_BUCKET`
-- `S3_REGION`
-- `S3_ACCESS_KEY_ID`
-- `S3_SECRET_ACCESS_KEY`
-- `S3_SOURCE_PREFIX`
-
-When S3 is not configured, the platform uses local disk storage and still works fully.
-
-## Important Runtime Notes
-
-- The app generates and stores a secret key automatically if `SECRET_KEY` is not provided.
-- Keep the `instance/` folder on the server because it stores uploads, generated streams, thumbnails, the database, and the generated secret key.
-- Do not commit `instance/` to Git if you want a clean repository.
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `gunicorn wsgi:app --bind 0.0.0.0:$PORT`
+- Health Check Path: `/healthz`
+- Persistent Disk Mount: `/opt/render/project/src/instance`
 
 ## Notes
 
-- Videos are transcoded into an HLS package stored under `instance/streams/`.
-- The browser player uses HLS.js for wide compatibility.
-- The SQLite database is created automatically on startup.
-
+This is a production-style scaffold. The heavy AI and FFmpeg/S3/CloudFront flows are wired as task placeholders so you can swap in real credentials and worker infra without restructuring the app.

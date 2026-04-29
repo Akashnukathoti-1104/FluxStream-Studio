@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Live | NexStream{% endblock %}
+{% block content %}
+<section class="panel">
+    <h2>Live Control</h2>
+    <p>Generate RTMP ingest credentials and broadcast to HLS.</p>
+    <div class="button-row">
+        <button id="startLive">Start Live</button>
+        <button id="endLive">End Live</button>
+    </div>
+    <pre id="liveOutput">No active stream.</pre>
+</section>
+{% endblock %}

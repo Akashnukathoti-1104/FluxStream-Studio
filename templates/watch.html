@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Watch | NexStream{% endblock %}
+{% block content %}
+<section class="panel watch-layout">
+    <article>
+        <h2>{{ video.title }}</h2>
+        <video id="player" controls data-playlist="{{ video.hls_playlist_url or '/stream/' ~ video.id ~ '/playlist.m3u8' }}" data-resume="{{ resume_at }}"></video>
+        <p>{{ video.description }}</p>
+        <div class="button-row">
+            <button data-quality="360p">360p</button>
+            <button data-quality="720p">720p</button>
+            <button data-quality="1080p">1080p</button>
+            <button data-quality="4k">4K</button>
+        </div>
+    </article>
+    <aside>
+        <h3>Related</h3>
+        {% for item in related %}
+            <a class="related" href="{{ url_for('videos.watch_page', video_id=item.id) }}">{{ item.title }}</a>
+        {% endfor %}
+    </aside>
+</section>
+{% endblock %}

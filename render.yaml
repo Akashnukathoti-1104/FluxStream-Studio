@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fluxstream-studio
+    name: nexstream
     env: python
     plan: starter
     buildCommand: pip install -r requirements.txt
